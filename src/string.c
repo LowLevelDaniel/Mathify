@@ -1,6 +1,8 @@
 #include "mathify/string.h"
 
-bool stoi(struct mathify *obj, long long int *val, int base) {
+#include <stdbool.h>
+
+int stoi(struct mathify *obj, long long int *val, int base) {
   *val = 0;
   for (int in = mathify_getc(obj); in != EOF && in != ';'; in = mathify_getc(obj)) {
     if (in >= '0' && in <= '9') {
@@ -9,13 +11,13 @@ bool stoi(struct mathify *obj, long long int *val, int base) {
       int digit = (in >= 'A' && in <= 'Z') ? (in - 'A' + 10) : (in - 'a' + 10);
       *val = (*val * base) + digit;
     } else {
-      return true; // return true on failure
+      return in; // leave parsing to lexer
     }
   }
-  return false; // return false on success
+  return EOF; // return EOF if end of statement
 }
 
-bool stou(struct mathify *obj, unsigned long long int *val, int base) {
+int stou(struct mathify *obj, unsigned long long int *val, int base) {
   *val = 0;
   for (int in = mathify_getc(obj); in != EOF && in != ';'; in = mathify_getc(obj)) {
     if (in >= '0' && in <= '9') {
@@ -24,13 +26,13 @@ bool stou(struct mathify *obj, unsigned long long int *val, int base) {
       int digit = (in >= 'A' && in <= 'Z') ? (in - 'A' + 10) : (in - 'a' + 10);
       *val = (*val * base) + digit;
     } else {
-      return true; // return true on failure
+      return in; // leave parsing to lexer
     }
   }
-  return false; // return false on success
+  return EOF; // return EOF if end of statement
 }
 
-bool stof(struct mathify *obj, long double *val, int base) {
+int stof(struct mathify *obj, long double *val, int base) {
   *val = 0;
   long double factor = 1;
   bool decimal_point = false;
@@ -45,7 +47,7 @@ bool stof(struct mathify *obj, long double *val, int base) {
       }
     } else if (in == '.') {
       if (decimal_point) {
-        return true; // return true on failure (multiple decimal points)
+        return in;
       } else {
         decimal_point = true;
       }
@@ -58,9 +60,9 @@ bool stof(struct mathify *obj, long double *val, int base) {
         *val = (*val * base) + digit;
       }
     } else {
-      return true; // return true on failure
+      return in; // leave parsing to lexer
     }
   }
-  return false; // return false on success
+  return EOF; // return EOF if end of statement
 }
 

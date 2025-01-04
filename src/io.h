@@ -13,6 +13,5 @@
 #ifdef __cplusplus
 extern "C"
 #endif
-char getnext(FILE *srcf);
 
 #endif // XPU_IO_IMPLEMENTED

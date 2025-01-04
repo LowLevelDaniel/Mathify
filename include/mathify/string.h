@@ -9,12 +9,11 @@
 extern "C" {
 #endif
 
-#include <stdbool.h>
 #include "mathify.h"
 
-bool stoi(struct mathify *obj, long long int *val, int base);
-bool stou(struct mathify *obj, unsigned long long int *val, int base);
-bool stof(struct mathify *obj, long double *val, int base);
+int stoi(struct mathify *obj, long long int *val, int base);
+int stou(struct mathify *obj, unsigned long long int *val, int base);
+int stof(struct mathify *obj, long double *val, int base);
 
 #ifdef __cplusplus
 }

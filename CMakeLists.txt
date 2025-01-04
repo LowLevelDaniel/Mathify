@@ -7,12 +7,11 @@ include(GNUInstallDirs)
 add_library(mathify SHARED
   src/mathify.c
   src/string.c
-  src/io.c
+  src/arena.c
 )
 add_library(mathify::mathify ALIAS mathify)
 
-target_link_libraries(mathify PRIVATE ${LINK_LIBS})
-target_compile_definitions(mathify PUBLIC ${COM_ARGS})
+target_link_libraries(mathify PRIVATE)
 
 include_directories(.)
 
