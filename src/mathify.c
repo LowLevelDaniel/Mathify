@@ -35,6 +35,7 @@ int mathify_getc(MATHIFY *obj) {
 }
 
 // Constexpr Operand
+/*
 bool token_ioperate(MATHIFY_TOKEN *result, MATHIFY_TOKEN *tok1, MATHIFY_TOKEN *tok2, int operator) {
   switch (operator) {
     case '+':
@@ -100,6 +101,7 @@ bool token_operate(MATHIFY_TOKEN *result, MATHIFY_TOKEN *tok1, MATHIFY_TOKEN *to
   ERR("Token Type is different");
   return true;
 }
+*/
 
 bool mathify_lex(MATHIFY *obj, MATHIFY_TOKEN *toks, MATHIFY_ARENA *arena) {
   MATHIFY_TOKEN tmptok;
