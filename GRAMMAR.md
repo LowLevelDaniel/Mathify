@@ -54,7 +54,18 @@ this follows for A,B,C,D,etc... where F would be equivalant to hexadecimal and 9
 The value is then as stated above a value consisting of characters 0-9, a-z and A-Z.
 
 ## Variables
+A string of characters for some value
+
+#### Mathify
+In Progress...
+
+#### Runtime
 In Progress...
 
 ## Functions
+
+#### Mathify
+In Progress...
+
+#### Runtime
 In Progress...

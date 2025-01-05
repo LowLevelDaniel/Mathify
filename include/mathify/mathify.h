@@ -13,80 +13,92 @@ extern "C" {
 #include <stdbool.h>
 
 #define MATHIFY struct mathify
-#define MATHIFY_TOKEN struct token
+#define MATHIFY_TOKEN struct mathfy_lex_token
 
 #ifndef MATHIFY_ARENA
-#define MATHIFY_ARENA arena_buf_t
-#define MATHIFY_ARENA_PUSH(Parena, Pval, size) if (mathify_arena_push(Parena,Pval,size)) { return true; }
-#define MATHIFY_ARENA_COPY(Parena, Pnewarena) mathify_arena_create(Pnewarena, Parena->bufsize)
-#define MATHIFY_ARENA_DELETE(Parena) mathify_arena_delete(Parena)
-#define MATHIFY_ARENA_BUFFER(Parena) ((Parena)->buf)
-#include "mathify/arena.h"
+  #define MATHIFY_ARENA arena_buf_t
+  #define MATHIFY_ARENA_PUSH(Parena, Pval, size) if (mathify_arena_push(Parena,Pval,size)) { return true; }
+  #define MATHIFY_ARENA_CREATE(Parena, size) if (mathify_arena_create(Parena, size)) { return true; }
+  #define MATHIFY_ARENA_DELETE(Parena) mathify_arena_delete(Parena)
+  #define MATHIFY_ARENA_BUFFER(Parena) ((Parena)->buf)
+  #define MATHIFY_ARENA_SIZE(Parena) ((Parena)->bufsize)
+  #include "mathify/arena.h"
 #endif
 
 
 // Enums
-  enum TOKEN_TYPE : char {
+  enum MATHIFY_TOKEN_TYPE : char {
     // Value
-    TOKEN_TYPE_INT = 0,
-    TOKEN_TYPE_UINT = 1,
-    TOKEN_TYPE_FLOAT = 2,
-    TOKEN_TYPE_MATHIFY_FUNCTION = 3,
-    TOKEN_TYPE_MATHIFY_VARIABLE = 4,
-    TOKEN_TYPE_VARIABLE = 5,
-    TOKEN_TYPE_SYMBOL = 6,
-    TOKEN_TYPE_FUNCTION = 7,
+    MATHIFY_TOKEN_TYPE_INT = 1,
+    MATHIFY_TOKEN_TYPE_UINT = 2,
+    MATHIFY_TOKEN_TYPE_FLOAT = 3,
+    MATHIFY_TOKEN_TYPE_MATHIFY_FUNCTION = 4,
+    MATHIFY_TOKEN_TYPE_MATHIFY_VARIABLE = 5,
+    MATHIFY_TOKEN_TYPE_VARIABLE = 6,
+    MATHIFY_TOKEN_TYPE_SYMBOL = 7,
+    MATHIFY_TOKEN_TYPE_FUNCTION = 8,
 
     // Arithmetic  
-    TOKEN_TYPE_ADD = 8,
-    TOKEN_TYPE_SUB = 9,
-    TOKEN_TYPE_MUL = 10,
-    TOKEN_TYPE_DIV = 11,
-    TOKEN_TYPE_MOD = 12,
+    MATHIFY_TOKEN_TYPE_ADD = 9,
+    MATHIFY_TOKEN_TYPE_SUB = 10,
+    MATHIFY_TOKEN_TYPE_MUL = 12,
+    MATHIFY_TOKEN_TYPE_DIV = 13,
+    MATHIFY_TOKEN_TYPE_MOD = 14,
 
     // Bit Manipulation
 
     // Comparison
 
     // Control Flow
-    TOKEN_TYPE_LPAREN = 13,
-    TOKEN_TYPE_RPAREN = 14,
+    MATHIFY_TOKEN_TYPE_LPAREN = 15,
+    MATHIFY_TOKEN_TYPE_RPAREN = 16,
+
+    // Unary
 
     // Auxiliary
-    TOKEN_TYPE_EOF = -1
+    MATHIFY_TOKEN_TYPE_EOF = -1
   };
 // Types
-  struct mathify {
-    // src
-    int _ptr;
-    union {
-      FILE* file;
-      char* bytes;
-    } src;
-  };
-  struct token {
-    struct token *next;
+  struct mathfy_lex_token {
     union {
       long long int i;
       unsigned long long int u;
       long double f;
     } val;
-    enum TOKEN_TYPE type;
+    enum MATHIFY_TOKEN_TYPE type;
+  };
+  struct mathify {
+    // src
+    union {
+      FILE* file;
+      char* bytes;
+    } src;
+    unsigned long int _consumed;
+    int _ptr;
   };
 // END
 
 // Creation
-bool mathify_create_file(MATHIFY *obj, FILE *file);
-bool mathify_create_ptr(MATHIFY *obj, char *ptr);
+bool mathify_create_file(MATHIFY*, FILE*);
+bool mathify_create_ptr(MATHIFY*, char*);
 
 // Update
 int mathify_getc(MATHIFY*);
 
+// Backend
+bool mathify_lex(MATHIFY*, MATHIFY_ARENA*arena);
+bool mathify_shunting_yard(MATHIFY_TOKEN*, MATHIFY_TOKEN*start, MATHIFY_TOKEN **newtop, MATHIFY_TOKEN*);
+bool mathify_parse(MATHIFY_TOKEN*, MATHIFY_ARENA*);
+bool mathify_parse_expr(MATHIFY_TOKEN *top, MATHIFY_TOKEN *end, MATHIFY_TOKEN *resulttok);
+
 // Main
-bool mathify_main(MATHIFY*, MATHIFY_TOKEN*, MATHIFY_ARENA*);
+bool mathify_main(MATHIFY*, MATHIFY_ARENA*);
+bool mathify_main_expr(MATHIFY*, MATHIFY_TOKEN*, unsigned long int default_arena_size);
 
 // debug
+void mathify_print_token(MATHIFY_TOKEN *tok);
 void mathify_debug(MATHIFY_TOKEN*);
+void mathify_debug_stack(MATHIFY_TOKEN *end, MATHIFY_TOKEN *top);
 
 #ifdef __cplusplus
 }
