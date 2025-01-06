@@ -87,87 +87,132 @@ int mathify_getbase(int in) {
 
 bool mathify_lex(MATHIFY *obj, MATHIFY_ARENA *arena) {
   bool neg = false;
-  MATHIFY_TOKEN prevtok;
+  MATHIFY_TOKEN prevtok = { .type = MATHIFY_TOKEN_TYPE_EOF };
   MATHIFY_TOKEN tmptok;
   for (int in = mathify_getc(obj); in != EOF;) {
     switch (in) {
-    case '+':
-      tmptok.type = MATHIFY_TOKEN_TYPE_ADD;
+    case '+': // IMPLEMENTED
       in = mathify_getc(obj);
+      if (in == '+') {
+        tmptok.type = MATHIFY_TOKEN_TYPE_POSTFIX_ADD;
+        in = mathify_getc(obj);
+      } else {
+        tmptok.type = MATHIFY_TOKEN_TYPE_ADD;
+      }
       break;
-    case '-':
-      tmptok.type = MATHIFY_TOKEN_TYPE_SUB;
+    case '-': // IMPLEMENTED
       in = mathify_getc(obj);
+      if (in == '+') {
+        tmptok.type = MATHIFY_TOKEN_TYPE_POSTFIX_SUB;
+        in = mathify_getc(obj);
+      } else {
+        tmptok.type = MATHIFY_TOKEN_TYPE_SUB;
+      }
       break;
-    case '*':
+    case '*': // IMPLEMENTED
       tmptok.type = MATHIFY_TOKEN_TYPE_MUL;
       in = mathify_getc(obj);
       break;
-    case '/':
+    case '/': // IMPLEMENTED
       tmptok.type = MATHIFY_TOKEN_TYPE_DIV;
       in = mathify_getc(obj);
       break;
-    case '%':
+    case '%': // IMPLEMENTED
       tmptok.type = MATHIFY_TOKEN_TYPE_MOD;
       in = mathify_getc(obj);
       break;
-    case '|':
+    case '|': // IMPLEMENTED
       in = mathify_getc(obj);
       if (in == '|') { // logical and
-        tmptok.type == MATHIFY_TOKEN_TYPE_LOGICAL_OR;
+        tmptok.type = MATHIFY_TOKEN_TYPE_LOGICAL_OR;
+        in = mathify_getc(obj);
       } else {
         tmptok.type = MATHIFY_TOKEN_TYPE_BITWISE_OR;
       }
       break;
-    case '^':
-      tmptok.type = MATHIFY_TOKEN_TYPE_BITWISE_XOR;
+    case '^': // IMPLEMENTED (could have a special arithmetic operation)
       in = mathify_getc(obj);
+      // if (in == '^') {
+      //   tmptok.type = MATHIFY_TOKEN_TYPE_POWER;
+      //   in = mathify_getc(obj);
+      // } else {
+        tmptok.type = MATHIFY_TOKEN_TYPE_BITWISE_XOR;
+      // }
       break;
-    case '&':
+    case '&': // IMPLEMENTED
       in = mathify_getc(obj);
       if (in == '&') { // logical and
-        tmptok.type == MATHIFY_TOKEN_TYPE_LOGICAL_AND;
+        tmptok.type = MATHIFY_TOKEN_TYPE_LOGICAL_AND;
+        in = mathify_getc(obj);
       } else {
-        if (prevtok.type == MATHIFY_TOKEN_TYPE_RPAREN  // bitwise and
-          || (prevtok.type >= MATHIFY_TOKEN_TYPE_ADD && prevtok.type < MATHIFY_TOKEN_TYPE_LPAREN)
-        ) { 
+        /*LOG("Second Ampersand Not Reached");
+        if (
+          prevtok.type != MATHIFY_TOKEN_TYPE_EOF && (
+            prevtok.type = MATHIFY_TOKEN_TYPE_RPAREN  // bitwise and
+            || 
+            (prevtok.type >= MATHIFY_TOKEN_TYPE_ADD && prevtok.type < MATHIFY_TOKEN_TYPE_LPAREN)
+          )
+        ) { */ 
           tmptok.type = MATHIFY_TOKEN_TYPE_BITWISE_AND;
-        } else { // address of
+        /* } else { // address of
           tmptok.type = MATHIFY_TOKEN_TYPE_ADDRESS_OF;
-        }
+        } */
       }
       break;
-    case '~':
+    case '~': // IMPLEMENTED
       tmptok.type = MATHIFY_TOKEN_TYPE_BITWISE_NOT;
       in = mathify_getc(obj);
       break;
-    case '<':
-      ERR("Error Symbol Not Implemented Yet");
-      return true;
-    case '>':
-      ERR("Error Symbol Not Implemented Yet");
-      return true;
-    case '!':
+    case '<': // IMPLEMENTED
+      in = mathify_getc(obj);
+      if (in == '<') {
+        tmptok.type = MATHIFY_TOKEN_TYPE_BITWISE_SHIFT_LEFT;
+        in = mathify_getc(obj);
+      } else if (in == '=') {
+        tmptok.type = MATHIFY_TOKEN_TYPE_LTE;
+        in = mathify_getc(obj);
+      } else {
+        tmptok.type = MATHIFY_TOKEN_TYPE_LT;
+      }
+      break;
+    case '>': // IMPLEMENTED
+      in = mathify_getc(obj);
+      if (in == '>') {
+        tmptok.type = MATHIFY_TOKEN_TYPE_BITWISE_SHIFT_RIGHT;
+        in = mathify_getc(obj);
+      } else if (in == '=') {
+        tmptok.type = MATHIFY_TOKEN_TYPE_MTE;
+        in = mathify_getc(obj);
+      } else {
+        tmptok.type = MATHIFY_TOKEN_TYPE_MT;
+      }
+      break;
+    case '!': // IMPLEMENTED
+      in = mathify_getc(obj);
+      tmptok.type = MATHIFY_TOKEN_TYPE_LOGICAL_NOT;
+      break;
+    case '=': // Assignments Not Possible Yet
       ERR("Invalid token combination");
       return true;
-    case '=':
-      ERR("Invalid token combination");
-      return true;
-    case '(':
+    case '(': // IMPLEMENTED
       // if previous value isn't an operator assume multiplication
-      if (!(prevtok.type >= MATHIFY_TOKEN_TYPE_ADD && prevtok.type < MATHIFY_TOKEN_TYPE_LPAREN)) {
+      if (prevtok.type != MATHIFY_TOKEN_TYPE_EOF && !(prevtok.type >= MATHIFY_TOKEN_TYPE_ADD && prevtok.type < MATHIFY_TOKEN_TYPE_LPAREN)) {
         MATHIFY_TOKEN __switch_scope_tok = { .type = MATHIFY_TOKEN_TYPE_MUL };
         MATHIFY_ARENA_PUSH(arena,&__switch_scope_tok,sizeof(MATHIFY_TOKEN));
       }
       tmptok.type = MATHIFY_TOKEN_TYPE_LPAREN;
       in = mathify_getc(obj);
       break;
-    case ')':
+    case ')': // IMPLEMENTED
       tmptok.type = MATHIFY_TOKEN_TYPE_RPAREN;
       in = mathify_getc(obj);
       break;
     case 'i':
     case 'I': {
+      if (prevtok.type != MATHIFY_TOKEN_TYPE_EOF && !(prevtok.type >= MATHIFY_TOKEN_TYPE_ADD && prevtok.type < MATHIFY_TOKEN_TYPE_LPAREN)) {
+        MATHIFY_TOKEN __switch_scope_tok = { .type = MATHIFY_TOKEN_TYPE_MUL };
+        MATHIFY_ARENA_PUSH(arena,&__switch_scope_tok,sizeof(MATHIFY_TOKEN));
+      }
       int base = mathify_getbase(mathify_getc(obj));
       if (base == 0) return true;
       tmptok.type = MATHIFY_TOKEN_TYPE_INT;
@@ -178,6 +223,10 @@ bool mathify_lex(MATHIFY *obj, MATHIFY_ARENA *arena) {
       break;
     } case 'u':
     case 'U': {
+      if (prevtok.type != MATHIFY_TOKEN_TYPE_EOF && !(prevtok.type >= MATHIFY_TOKEN_TYPE_ADD && prevtok.type < MATHIFY_TOKEN_TYPE_LPAREN)) {
+        MATHIFY_TOKEN __switch_scope_tok = { .type = MATHIFY_TOKEN_TYPE_MUL };
+        MATHIFY_ARENA_PUSH(arena,&__switch_scope_tok,sizeof(MATHIFY_TOKEN));
+      }
       int base = mathify_getbase(mathify_getc(obj));
       if (base == 0) return true;
       tmptok.type = MATHIFY_TOKEN_TYPE_UINT;
@@ -188,6 +237,10 @@ bool mathify_lex(MATHIFY *obj, MATHIFY_ARENA *arena) {
       break;
     } case 'f':
     case 'F': {
+      if (prevtok.type != MATHIFY_TOKEN_TYPE_EOF && !(prevtok.type >= MATHIFY_TOKEN_TYPE_ADD && prevtok.type < MATHIFY_TOKEN_TYPE_LPAREN)) {
+        MATHIFY_TOKEN __switch_scope_tok = { .type = MATHIFY_TOKEN_TYPE_MUL };
+        MATHIFY_ARENA_PUSH(arena,&__switch_scope_tok,sizeof(MATHIFY_TOKEN));
+      }
       int base = mathify_getbase(mathify_getc(obj));
       if (base == 0) return true;
       tmptok.type = MATHIFY_TOKEN_TYPE_FLOAT;
@@ -232,11 +285,7 @@ int get_precedence(enum MATHIFY_TOKEN_TYPE type) {
     case MATHIFY_TOKEN_TYPE_DIV: 
     case MATHIFY_TOKEN_TYPE_MOD: return 12;
     case MATHIFY_TOKEN_TYPE_BITWISE_NOT:
-    case MATHIFY_TOKEN_TYPE_EQ_TRUE:
-    case MATHIFY_TOKEN_TYPE_LOGICAL_NOT:
-    case MATHIFY_TOKEN_TYPE_PREFIX_ADD:
-    case MATHIFY_TOKEN_TYPE_PREFIX_SUB: return 13;
-    case MATHIFY_TOKEN_TYPE_FUNCTION_CALL:
+    case MATHIFY_TOKEN_TYPE_LOGICAL_NOT: return 13;
     case MATHIFY_TOKEN_TYPE_POSTFIX_ADD:
     case MATHIFY_TOKEN_TYPE_POSTFIX_SUB: return 14;
     // Add Functions, Derferencing, etc...
@@ -294,6 +343,7 @@ bool mathify_shunting_yard(MATHIFY_TOKEN *input, MATHIFY_TOKEN *output, MATHIFY_
 
 
 // Stage 3 (Expression)
+// arith
 bool mathify_add_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
   if (result->type == MATHIFY_TOKEN_TYPE_INT) {
     result->val.i += val->val.i;
@@ -402,6 +452,135 @@ bool mathify_and_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
   }
   return false;
 }
+// comparsion
+bool mathify_eq_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = result->val.i == val->val.i;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.i = result->val.u == val->val.u;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+    result->val.i = result->val.f == val->val.f;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  result->type = MATHIFY_TOKEN_TYPE_INT;
+  return false;
+}
+bool mathify_neq_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = result->val.i != val->val.i;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.i = result->val.u != val->val.u;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+    result->val.i = result->val.f != val->val.f;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  result->type = MATHIFY_TOKEN_TYPE_INT;
+  return false;
+}
+bool mathify_lt_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = result->val.i < val->val.i;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.i = result->val.u < val->val.u;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+    result->val.i = result->val.f < val->val.f;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  result->type = MATHIFY_TOKEN_TYPE_INT;
+  return false;
+}
+bool mathify_lte_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = result->val.i <= val->val.i;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.i = result->val.u <= val->val.u;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+    result->val.i = result->val.f <= val->val.f;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  result->type = MATHIFY_TOKEN_TYPE_INT;
+  return false;
+}
+bool mathify_mt_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = result->val.i > val->val.i;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.i = result->val.u > val->val.u;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+    result->val.i = result->val.f > val->val.f;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  result->type = MATHIFY_TOKEN_TYPE_INT;
+  return false;
+}
+bool mathify_mte_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = result->val.i >= val->val.i;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.i = result->val.u >= val->val.u;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+    result->val.i = result->val.f >= val->val.f;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  result->type = MATHIFY_TOKEN_TYPE_INT;
+  return false;
+}
+bool mathify_logical_and_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = result->val.i && val->val.i;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.i = result->val.u && val->val.u;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+    result->val.i = result->val.f && val->val.f;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  result->type = MATHIFY_TOKEN_TYPE_INT;
+  return false;
+}
+bool mathify_logical_or_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = result->val.i || val->val.i;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.i = result->val.u || val->val.u;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+    result->val.i = result->val.f || val->val.f;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  result->type = MATHIFY_TOKEN_TYPE_INT;
+  return false;
+}
+
+// unary
+bool mathify_logical_not_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = !val->val.i;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.i = !val->val.u;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+    result->val.i = !val->val.f;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  result->type = MATHIFY_TOKEN_TYPE_INT;
+  return false;
+}
 bool mathify_not_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
   if (result->type == MATHIFY_TOKEN_TYPE_INT) {
     result->val.i = ~val->val.i;
@@ -410,6 +589,32 @@ bool mathify_not_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
   } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
     ERR("NOT (bitwise) not supported for floats");
     return true;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  return false;
+}
+bool mathify_postfix_add_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = val->val.i + 1;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.u = val->val.u + 1;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+   result->val.f = val->val.f + 1;
+  } else {
+    ERR("Invalid Mathify Token Type in expression parsing");
+    return true;
+  }
+  return false;
+}
+bool mathify_postfix_sub_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
+  if (result->type == MATHIFY_TOKEN_TYPE_INT) {
+    result->val.i = val->val.i - 1;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_UINT) {
+    result->val.u = val->val.u - 1;
+  } else if (result->type == MATHIFY_TOKEN_TYPE_FLOAT) {
+   result->val.f = val->val.f - 1;
   } else {
     ERR("Invalid Mathify Token Type in expression parsing");
     return true;
@@ -437,29 +642,20 @@ bool mathify_rpn_operation(MATHIFY_TOKEN **top, MATHIFY_TOKEN *result) {
   }
   --(*top);
 
-  if (operator->type > MATHIFY_TOKEN_TYPE_RPAREN) {
+  if (operator->type > MATHIFY_TOKEN_TYPE_LOGICAL_OR && operator->type < MATHIFY_TOKEN_TYPE_POWER) {
     result->type = val.type;
     switch (operator->type) {
     case MATHIFY_TOKEN_TYPE_BITWISE_NOT:
       if (mathify_not_expr(result, &val)) return true;
       break;
-    case MATHIFY_TOKEN_TYPE_EQ_TRUE:
-      ERR("NotImplementedYet - MATHIFY_TOKEN_TYPE_EQ_TRUE");
-      break;
     case MATHIFY_TOKEN_TYPE_LOGICAL_NOT:
-      ERR("NotImplementedYet - MATHIFY_TOKEN_TYPE_LOGICAL_NOT");
-      break;
-    case MATHIFY_TOKEN_TYPE_PREFIX_ADD:
-      ERR("NotImplementedYet - MATHIFY_TOKEN_TYPE_PREFIX_ADD");
-      break;
-    case MATHIFY_TOKEN_TYPE_PREFIX_SUB:
-      ERR("NotImplementedYet - MATHIFY_TOKEN_TYPE_PREFIX_SUB");
+      if (mathify_logical_not_expr(result, &val)) return true;
       break;
     case MATHIFY_TOKEN_TYPE_POSTFIX_ADD:
-      ERR("NotImplementedYet - MATHIFY_TOKEN_TYPE_POSTFIX_ADD");
+      ERR("NotImplementedYet - MATHIFY_TOKEN_TYPE_PREFIX_ADD");
       break;
     case MATHIFY_TOKEN_TYPE_POSTFIX_SUB:
-      ERR("NotImplementedYet - MATHIFY_TOKEN_TYPE_POSTFIX_SUB");
+      ERR("NotImplementedYet - MATHIFY_TOKEN_TYPE_PREFIX_SUB");
       break;
     default:
       ERR("Invalid Unary Operator");
@@ -527,11 +723,32 @@ bool mathify_rpn_operation(MATHIFY_TOKEN **top, MATHIFY_TOKEN *result) {
   case MATHIFY_TOKEN_TYPE_BITWISE_AND:
     if (mathify_and_expr(result, &val)) return true;
     break;
-  case MATHIFY_TOKEN_TYPE_BITWISE_NOT:
-    if (mathify_not_expr(result, &val)) return true;
-    break; 
+  case MATHIFY_TOKEN_TYPE_EQ:
+    if (mathify_eq_expr(result, &val)) return true;
+    break;
+  case MATHIFY_TOKEN_TYPE_NEQ:
+    if (mathify_neq_expr(result, &val)) return true;
+    break;
+  case MATHIFY_TOKEN_TYPE_LT:
+    if (mathify_lt_expr(result, &val)) return true;
+    break;
+  case MATHIFY_TOKEN_TYPE_LTE:
+    if (mathify_lte_expr(result, &val)) return true;
+    break;
+  case MATHIFY_TOKEN_TYPE_MT:
+    if (mathify_mt_expr(result, &val)) return true;
+    break;
+  case MATHIFY_TOKEN_TYPE_MTE:
+    if (mathify_mte_expr(result, &val)) return true;
+    break;
+  case MATHIFY_TOKEN_TYPE_LOGICAL_AND:
+    if (mathify_logical_and_expr(result, &val)) return true;
+    break;
+  case MATHIFY_TOKEN_TYPE_LOGICAL_OR:
+    if (mathify_logical_or_expr(result, &val)) return true;
+    break;
   default:
-    ERR("Invalid Operator Type");
+    ERR("Invalid Operator Type %hhd", operator->type);
     return true;
   };
 
@@ -625,8 +842,6 @@ bool mathify_main_expr(MATHIFY *obj, MATHIFY_TOKEN *tok, unsigned long int defau
   MATHIFY_ARENA_DELETE(&lextoks_arena);
   MATHIFY_ARENA_DELETE(&tmpstack_arena);
 
-  mathify_debug_stack(outputtoks_bottom, outputtoks_top);
-
   // interpret
   if (mathify_parse_expr(
     outputtoks_top,
@@ -664,6 +879,40 @@ void mathify_print_token(MATHIFY_TOKEN *tok) {
     LOG("DIV"); break;
   case MATHIFY_TOKEN_TYPE_MOD:
     LOG("MOD"); break;
+  case MATHIFY_TOKEN_TYPE_BITWISE_OR:
+    LOG("OR"); break;
+  case MATHIFY_TOKEN_TYPE_BITWISE_XOR:
+    LOG("XOR"); break;
+  case MATHIFY_TOKEN_TYPE_BITWISE_AND:
+    LOG("AND"); break;
+  case MATHIFY_TOKEN_TYPE_BITWISE_SHIFT_LEFT:
+    LOG("SHIFT LEFT"); break;
+  case MATHIFY_TOKEN_TYPE_BITWISE_SHIFT_RIGHT:
+    LOG("SHIFT RIGHT"); break;
+  case MATHIFY_TOKEN_TYPE_EQ:
+    LOG("EQ"); break;
+  case MATHIFY_TOKEN_TYPE_NEQ:
+    LOG("NEQ"); break;
+  case MATHIFY_TOKEN_TYPE_LT:
+    LOG("LT"); break;
+  case MATHIFY_TOKEN_TYPE_LTE:
+    LOG("LTE"); break;
+  case MATHIFY_TOKEN_TYPE_MT:
+    LOG("MT"); break;
+  case MATHIFY_TOKEN_TYPE_MTE:
+    LOG("MTE"); break;
+  case MATHIFY_TOKEN_TYPE_LOGICAL_AND:
+    LOG("LOGICAL AND"); break;
+  case MATHIFY_TOKEN_TYPE_LOGICAL_OR:
+    LOG("LOGICAL OR"); break;
+  case MATHIFY_TOKEN_TYPE_BITWISE_NOT:
+    LOG("NOT"); break;
+  case MATHIFY_TOKEN_TYPE_LOGICAL_NOT:
+    LOG("LOGICAL NOT"); break;
+  case MATHIFY_TOKEN_TYPE_POSTFIX_ADD:
+    LOG("INCREMENT"); break;
+  case MATHIFY_TOKEN_TYPE_POSTFIX_SUB:
+    LOG("DECREMENT"); break;
   default:
     ERR("ERR");
     return;
