@@ -311,37 +311,36 @@ bool mathify_mod_expr(MATHIFY_TOKEN *result, MATHIFY_TOKEN *val) {
   return false;
 }
 
-bool mathify_rpn_operation(MATHIFY_TOKEN *top, MATHIFY_TOKEN *result) {
+bool mathify_rpn_operation(MATHIFY_TOKEN **top, MATHIFY_TOKEN *result) {
   // Assign the operator to a variable for later use and predefine val1 and val2
-  MATHIFY_TOKEN *operator = top;
+  MATHIFY_TOKEN *operator = *top;
   MATHIFY_TOKEN val;
 
   // Remove the operator token
-  --top;
+  --(*top);
 
-  // Retrieve the first operand
-  if (top->type < MATHIFY_TOKEN_TYPE_ADD) {
-    if (top->type > MATHIFY_TOKEN_TYPE_FLOAT) {
-      ERR("Runtime Type %hhd in mathify expression", top->type);
+  // Get the first operand
+  if ((*top)->type < MATHIFY_TOKEN_TYPE_ADD) {
+    if ((*top)->type > MATHIFY_TOKEN_TYPE_FLOAT) {
+      ERR("Runtime Type %hhd in mathify expression", (*top)->type);
       return true;
     }
-    val = *top;
+    val = **top;
   } else {
     if (mathify_rpn_operation(top, &val)) return true;
   }
-  --top;
+  --(*top);
 
-  // Retrieve the second operand
-  if (top->type < MATHIFY_TOKEN_TYPE_ADD) {
-    if (top->type > MATHIFY_TOKEN_TYPE_FLOAT) {
-      ERR("Runtime Type %hhd in mathify expression", top->type);
+  // Get the second operand
+  if ((*top)->type < MATHIFY_TOKEN_TYPE_ADD) {
+    if ((*top)->type > MATHIFY_TOKEN_TYPE_FLOAT) {
+      ERR("Runtime Type %hhd in mathify expression", (*top)->type);
       return true;
     }
-    *result = *top;
+    *result = **top;
   } else {
     if (mathify_rpn_operation(top, result)) return true;
   }
-  --top;
 
   switch (operator->type) {
   case MATHIFY_TOKEN_TYPE_ADD:
@@ -369,7 +368,7 @@ bool mathify_rpn_operation(MATHIFY_TOKEN *top, MATHIFY_TOKEN *result) {
 
 bool mathify_parse_expr(MATHIFY_TOKEN *top, MATHIFY_TOKEN *end, MATHIFY_TOKEN *resulttok) {
   --top;
-  return mathify_rpn_operation(top, resulttok);
+  return mathify_rpn_operation(&top, resulttok);
 }
 
 // Stage 3 (Runtime)

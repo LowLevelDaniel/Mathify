@@ -3,7 +3,7 @@
 int main(int argc, char **argv) {
   char *mathexpr = 
     // "i  \n d - + + - - - \n\t 1 \t\t\t 0 \t\t\n\n\n  0 + " 
-    "ud10 * ud2 + ud2 * ud2" // % ud10"
+    "ud10 + ud10 - ud10 * ud10 / ud10" // % ud10"
     // " + fd 100.10"
     // "( id10 + id10 )( id10 + id10 ) + ( id10 + id10 )"
     // "id10 + id10 - id10"
