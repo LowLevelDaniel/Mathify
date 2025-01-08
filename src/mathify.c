@@ -7,12 +7,12 @@
 bool mathify_create_file(MATHIFY *obj, FILE *file) {
   obj->_ptr = false;
   obj->src.file = file;
-  return true;
+  return false;
 }
 bool mathify_create_ptr(MATHIFY *obj, char *ptr) {
   obj->_ptr = true;
   obj->src.bytes = ptr;
-  return true;
+  return false;
 }
 
 // Update
@@ -757,6 +757,11 @@ bool mathify_rpn_operation(MATHIFY_TOKEN **top, MATHIFY_TOKEN *result) {
 
 bool mathify_parse_expr(MATHIFY_TOKEN *top, MATHIFY_TOKEN *end, MATHIFY_TOKEN *resulttok) {
   --top;
+
+  if (top->type < MATHIFY_TOKEN_TYPE_ADD) {
+    *resulttok = *top;
+    return false;
+  }
   return mathify_rpn_operation(&top, resulttok);
 }
 
